@@ -41,6 +41,9 @@ function App() {
       setPage(1);
       toast.success("Note created successfully!");
     },
+    onError: (error) => {
+      console.error(error);
+    },
   });
 
   const deleteMutation = useMutation({
@@ -49,6 +52,9 @@ function App() {
     onSettled: () => setIsDeletingId(null),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notes"] });
+    },
+    onError: (error) => {
+      console.error(error);
     },
   });
 
