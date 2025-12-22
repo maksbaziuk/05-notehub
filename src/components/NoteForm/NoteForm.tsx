@@ -1,4 +1,4 @@
-import { ErrorMessage, Field, Form, Formik } from "formik";
+import { ErrorMessage, Field, Form, Formik, type FormikHelpers } from "formik";
 import { useId } from "react";
 import * as Yup from "yup";
 import type { CreateNoteRequest, NoteTag } from "../../types/note";
@@ -33,8 +33,12 @@ const NoteFormSchema = Yup.object().shape({
 const NoteForm = ({ onSubmit, onCancel, isLoading }: NoteFormProps) => {
   const fieldId = useId();
 
-  const handleSubmit = (values: CreateNoteRequest) => {
+  const handleSubmit = (
+    values: CreateNoteRequest,
+    formikHelpers: FormikHelpers<CreateNoteRequest>
+  ) => {
     onSubmit(values);
+    formikHelpers.resetForm();
   };
 
   return (

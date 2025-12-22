@@ -40,7 +40,6 @@ function App() {
       setIsModalOpen(false);
       setPage(1);
       toast.success("Note created successfully!");
-      resetForm();
     },
   });
 
@@ -56,6 +55,7 @@ function App() {
   const handleCreateNote = (values: CreateNoteRequest) => {
     createMutation.mutate(values);
   };
+
   const handlePageChange = ({ selected }: { selected: number }) => {
     setPage(selected + 1);
   };
@@ -73,7 +73,7 @@ function App() {
 
   useEffect(() => {
     if (data && data.notes.length === 0) {
-      toast.error("No movies found for your request.");
+      toast.error("No notes found for your request.");
     }
   }, [data]);
 
@@ -127,6 +127,3 @@ function App() {
 }
 
 export default App;
-function resetForm() {
-  throw new Error("Function not implemented.");
-}
