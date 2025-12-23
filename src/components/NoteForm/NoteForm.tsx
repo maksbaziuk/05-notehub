@@ -3,11 +3,13 @@ import { useId } from "react";
 import * as Yup from "yup";
 import type { CreateNoteRequest, NoteTag } from "../../types/note";
 import css from "./NoteForm.module.css";
+import toast from "react-hot-toast";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { CreateNote } from "../../services/noteService";
 
 interface NoteFormProps {
-  onSubmit: (values: CreateNoteRequest) => void;
   onCancel: () => void;
-  isLoading?: boolean;
+  onClose: () => void;
 }
 
 const INITIAL_VALUES: CreateNoteRequest = {
@@ -30,15 +32,33 @@ const NoteFormSchema = Yup.object().shape({
     .required("Tag is required"),
 });
 
-const NoteForm = ({ onSubmit, onCancel, isLoading }: NoteFormProps) => {
+const NoteForm = ({ onCancel, onClose }: NoteFormProps) => {
   const fieldId = useId();
+  const queryClient = useQueryClient();
+
+  const { mutate, isPending } = useMutation({
+    mutationFn: CreateNote,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
+
+      toast.success("Note created successfully!");
+    },
+    onError: (error) => {
+      console.error(error);
+      toast.error("Failed to create note");
+    },
+  });
 
   const handleSubmit = (
     values: CreateNoteRequest,
     formikHelpers: FormikHelpers<CreateNoteRequest>
   ) => {
-    onSubmit(values);
-    formikHelpers.resetForm();
+    mutate(values, {
+      onSuccess: () => {
+        formikHelpers.resetForm();
+        onClose();
+      },
+    });
   };
 
   return (
@@ -95,9 +115,9 @@ const NoteForm = ({ onSubmit, onCancel, isLoading }: NoteFormProps) => {
           <button
             type="submit"
             className={css.submitButton}
-            disabled={isLoading}
+            disabled={isPending}
           >
-            {isLoading ? "Creating..." : "Create note"}
+            {isPending ? "Creating..." : "Create note"}
           </button>
         </fieldset>
       </Form>

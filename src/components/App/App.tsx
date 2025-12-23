@@ -1,14 +1,8 @@
 import css from "./App.module.css";
 import { useEffect, useState } from "react";
-import { FetchNotes, CreateNote, DeleteNote } from "../../services/noteService";
+import { FetchNotes } from "../../services/noteService";
 import toast, { Toaster } from "react-hot-toast";
-import {
-  keepPreviousData,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
-import type { CreateNoteRequest } from "../../types/note";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import SearchBox from "../SearchBox/SearchBox";
 import { useDebouncedCallback } from "use-debounce";
 import NoteList from "../NoteList/NoteList";
@@ -21,11 +15,9 @@ import ErrorMessage from "../ErrorMessage/ErrorMessage";
 const perPage = 12;
 
 function App() {
-  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
 
   const { data, error, isLoading } = useQuery({
     queryKey: ["notes", search, page, perPage],
@@ -33,41 +25,8 @@ function App() {
     placeholderData: keepPreviousData,
   });
 
-  const createMutation = useMutation({
-    mutationFn: CreateNote,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notes"] });
-      setIsModalOpen(false);
-      setPage(1);
-      toast.success("Note created successfully!");
-    },
-    onError: (error) => {
-      console.error(error);
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: DeleteNote,
-    onMutate: (id) => setIsDeletingId(id),
-    onSettled: () => setIsDeletingId(null),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notes"] });
-    },
-    onError: (error) => {
-      console.error(error);
-    },
-  });
-
-  const handleCreateNote = (values: CreateNoteRequest) => {
-    createMutation.mutate(values);
-  };
-
   const handlePageChange = ({ selected }: { selected: number }) => {
     setPage(selected + 1);
-  };
-
-  const handleDeleteNote = (id: string) => {
-    deleteMutation.mutate(id);
   };
 
   const debounceSearch = useDebouncedCallback(
@@ -113,20 +72,10 @@ function App() {
       <main>
         {error && <ErrorMessage />}
         {isLoading && <Loader />}
-        {data && data.notes.length > 0 && (
-          <NoteList
-            notes={data.notes}
-            onDelete={handleDeleteNote}
-            isDeletingId={isDeletingId}
-          />
-        )}
+        {data && data.notes.length > 0 && <NoteList notes={data.notes} />}
       </main>
       <Modal isOpen={isModalOpen} onClose={closeModal}>
-        <NoteForm
-          onSubmit={handleCreateNote}
-          onCancel={closeModal}
-          isLoading={createMutation.isPending}
-        />
+        <NoteForm onCancel={closeModal} onClose={closeModal} />
       </Modal>
     </div>
   );
